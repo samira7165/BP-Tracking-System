@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Script Checker</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="/fonts/anek-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="page-record">
+  <header class="topbar">
+    <h1 class="wordmark">Script <mark>Checker</mark></h1>
+    <ol class="guide" aria-label="Steps">
+      <li id="guide-details"><b>1</b>Your details</li>
+      <li id="guide-record"><b>2</b>Record</li>
+      <li id="guide-check"><b>3</b>Send</li>
+    </ol>
+  </header>
+
+  <main class="studio">
+    <div class="shoot">
+    <section class="stage" id="stage" data-state="off" aria-label="Recording">
+      <div class="camera">
+        <video id="preview" autoplay muted playsinline></video>
+        <div class="camera-off">
+          <div class="off-card">
+            <svg viewBox="0 0 120 90" width="132" height="99" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M2 20V8a6 6 0 0 1 6-6h14M98 2h14a6 6 0 0 1 6 6v12M118 70v12a6 6 0 0 1-6 6H98M22 88H8a6 6 0 0 1-6-6V70" />
+              <g class="off-person"><circle cx="60" cy="36" r="15" /><path d="M29 80c2-17 14-25 31-25s29 8 31 25" /></g>
+            </svg>
+            <p class="off-title">Your camera is off</p>
+            <p class="off-sub">Centre yourself in the frame and find a quiet spot. Sound is recorded too.</p>
+            <button id="btn-camera" class="btn btn-light"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h8A1.5 1.5 0 0 1 14 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 3 16.5zM14 10.5l5.5-3v9l-5.5-3" /></svg>Turn on camera</button>
+            <p id="camera-error" class="cam-error hidden" role="alert"></p>
+          </div>
+        </div>
+        <div id="countdown" class="countdown hidden" aria-live="assertive"></div>
+        <div id="rec-badge" class="rec-badge hidden"><i></i><span id="timer">00:00</span></div>
+      </div>
+
+      <div class="controls">
+        <div class="controls-start">
+          <p id="hint" class="hint" role="status"></p>
+          <div class="mic" title="Microphone level"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-5 0v-5A2.5 2.5 0 0 1 12 4zM6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v3" /></svg><span><i id="mic-level"></i></span></div>
+        </div>
+        <div class="shutter-slot">
+          <button id="btn-record" class="shutter" aria-label="Start recording" title="Start recording" disabled><i></i></button>
+          <button id="btn-stop" class="shutter shutter-stop" aria-label="Stop recording" title="Stop recording" disabled><i></i></button>
+        </div>
+        <div class="controls-end">
+          <label class="file-link"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5V4.5M7.5 8.5 12 4l4.5 4.5M4.5 15.5v3A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-3" /></svg>Upload a video instead<input type="file" id="file-input" accept="video/*,audio/*" /></label>
+          <button id="btn-retake" class="btn btn-dark" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5v5h5M5 10a7.5 7.5 0 1 1-.4 4.5" /></svg><span id="retake-label">Retake</span></button>
+          <button id="btn-submit" class="btn btn-mark" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11" /></svg><span id="submit-label">Send recording</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="script-panel" aria-labelledby="script-title">
+      <div class="script-scroll" id="script-scroll" tabindex="0">
+        <h2 id="script-title">Your script</h2>
+        <p id="script-text" class="script-text">Loading…</p>
+      </div>
+    </section>
+    </div>
+
+    <section class="setup" aria-label="Recording details">
+      <div class="field field-grow">
+        <label for="script-select">Script</label>
+        <select id="script-select" disabled></select>
+      </div>
+      <div class="field">
+        <label for="speaker">Your name</label>
+        <input id="speaker" maxlength="100" autocomplete="name" placeholder="So the admin knows who recorded this" aria-describedby="speaker-error" />
+        <p id="speaker-error" class="field-error hidden" role="alert"></p>
+      </div>
+      <p id="script-note" class="note" role="status"></p>
+    </section>
+
+    <section id="progress" class="progress hidden" aria-live="polite">
+      <div class="upload-bar" id="upload-bar"><i id="upload-fill"></i></div>
+      <p id="progress-text"></p>
+    </section>
+
+    <section id="takes" class="takes hidden" aria-labelledby="takes-title">
+      <div class="takes-head">
+        <h2 id="takes-title">Your recordings</h2>
+        <button id="btn-clear-takes" class="link" title="Removes the list from this device only">Clear list</button>
+      </div>
+      <ul id="takes-list"></ul>
+    </section>
+
+  </main>
+
+  <script src="/report.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -16,7 +16,8 @@ Browser (record) ──upload──▶ NestJS ──▶ uploads/  (video saved)
 
 1. Install **Node.js 18+** (https://nodejs.org).
 2. Open this folder in VS Code, then open the terminal (`Ctrl + ``).
-3. Install packages:
+3. Start **MySQL** in the XAMPP Control Panel. The database `bp_management` and its tables are created automatically.
+   Then install packages:
    ```bash
    npm install
    ```
@@ -90,17 +91,17 @@ src/
   main.ts                         starts server, serves /public
   app.module.ts
   admin/                          password login + guard for admin-only routes
-  settings/                       API key + report prompt (data/settings.json, keep it private)
-  scripts/                        scripts written by the admin (data/scripts.json)
+  settings/                       report prompt (MySQL) + API key (data/settings.json, keep it private)
+  scripts/                        scripts written by the admin
+  database/                       MySQL connection, tables, one-time import of old JSON files
   common/
-    json-store.ts                 shared JSON-file storage
     paths.ts                      uploads/ and data/ folders
     gemini.ts                     Gemini client + plain-English errors
   recordings/
     recordings.controller.ts      REST endpoints + file upload (multer)
     recordings.service.ts         the pipeline: save → transcribe → analyze
     processing-queue.ts           one-at-a-time queue
-    recordings.store.ts           recordings storage (data/recordings.json)
+    recordings.store.ts           recordings table
     recording.types.ts            Recording / Transcript / Report types
     dto/create-recording.dto.ts   validation for scriptId/speaker
   transcription/
@@ -121,6 +122,7 @@ public/
 - `TRANSCRIBE_MODEL`: default `gemini-3.5-transcribe`
 - `ANALYSIS_MODEL`: default `gemini-3.5-flash-lite`
 - `GEMINI_API_KEY`: optional. A key saved in the dashboard is used first.
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: MySQL login (defaults fit XAMPP)
 - `ADMIN_PASSWORD`: password for `/admin` (nobody can log in until it is set)
 - `MAX_UPLOAD_MB`: default 200
 - `FFMPEG_PATH`: leave empty to use the bundled `ffmpeg-static`
@@ -129,6 +131,5 @@ public/
 
 - Bangla works: choose **Bangla** as the script's language in the admin dashboard for better transcription.
 - A recording can be up to about one hour long.
-- The JSON-file store is fine for demos. For production, swap `RecordingsStore` for TypeORM/Prisma + Postgres,
-  and move processing to a queue (BullMQ) so it survives restarts.
+- Videos are files in `uploads/`; MySQL only stores their names. Back up both the database and that folder.
 - To store videos in S3/Cloudinary instead of `uploads/`, change the multer storage in `recordings.module.ts`.

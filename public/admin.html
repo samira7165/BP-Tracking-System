@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Script Checker</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="/fonts/anek-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="page-admin">
+  <main id="login" class="login hidden">
+    <form id="login-form">
+      <h1 class="wordmark">Script <mark>Checker</mark></h1>
+      <p class="login-sub">Log in to manage scripts and review brand promoters.</p>
+      <div class="field">
+        <label for="password">Admin password</label>
+        <input id="password" type="password" autocomplete="current-password" required />
+      </div>
+      <div id="login-error" class="error hidden" role="alert"></div>
+      <button class="btn btn-ink">Log in</button>
+    </form>
+  </main>
+
+  <div id="dashboard" class="workspace hidden">
+    <aside class="side">
+      <p class="wordmark">Script <mark>Checker</mark></p>
+      <nav aria-label="Admin">
+        <a href="#scripts" data-view="scripts">Scripts <span id="count-scripts" class="count"></span></a>
+        <a href="#recordings" data-view="recordings">Recordings <span id="count-recordings" class="count"></span></a>
+        <a href="#settings" data-view="settings">Settings</a>
+      </nav>
+      <div class="side-foot">
+        <a href="/" target="_blank">Open recording page</a>
+        <button id="btn-copy" class="link">Copy link for promoters</button>
+        <button id="btn-logout" class="link">Log out</button>
+      </div>
+    </aside>
+
+    <main class="work">
+      <section id="setup-card" class="setup-card hidden" aria-labelledby="setup-title">
+        <h2 id="setup-title">Finish setting up</h2>
+        <ol id="setup-steps"></ol>
+      </section>
+
+      <section id="view-scripts" class="view hidden">
+        <div class="view-head">
+          <div><h1>Scripts</h1><p id="scripts-summary" class="view-sub"></p></div>
+          <button id="btn-new" class="btn btn-ink"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>New script</button>
+        </div>
+        <div id="scripts"><p class="empty">Loading…</p></div>
+      </section>
+
+      <section id="view-recordings" class="view hidden">
+        <div class="view-head"><div><h1>Recordings</h1><p id="recordings-summary" class="view-sub"></p></div></div>
+        <div id="filters" class="filters hidden">
+          <input id="filter-text" type="search" placeholder="Search by promoter or script" aria-label="Search recordings" />
+          <select id="filter-result" aria-label="Filter by result">
+            <option value="">All results</option>
+            <option value="MATCHED">Matched</option>
+            <option value="PARTIALLY_MATCHED">Partly matched</option>
+            <option value="NOT_MATCHED">Not matched</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+        <div id="history"><p class="empty">Loading…</p></div>
+      </section>
+
+      <section id="view-recording" class="view hidden">
+        <a class="back" href="#recordings"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>All recordings</a>
+        <p id="progress-text" class="status-line hidden" role="status"></p>
+        <div class="report hidden" id="report"></div>
+      </section>
+
+      <section id="view-settings" class="view hidden">
+        <div class="view-head"><h1>Settings</h1></div>
+
+        <form id="key-form" class="panel">
+          <div class="panel-head">
+            <h2>Gemini API key</h2>
+            <p id="key-status" class="key-status" role="status"></p>
+          </div>
+          <p class="panel-text">The key turns speech into text and writes the reports. Create one in <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener">Google AI Studio</a>. On the free plan, Google may use your recordings and scripts to improve its products. With billing turned on, it does not.</p>
+          <div class="field">
+            <label for="api-key" id="key-label">API key</label>
+            <div class="with-button">
+              <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key" required />
+              <button type="button" class="btn" id="btn-show-key" aria-pressed="false">Show</button>
+            </div>
+            <p class="field-help">Stored on this server only. It is never shown again after you save it.</p>
+          </div>
+          <div id="key-error" class="error hidden" role="alert"></div>
+          <div class="panel-foot">
+            <button type="button" class="btn hidden" id="btn-remove-key">Remove key</button>
+            <button class="btn btn-ink" id="btn-save-key">Save key</button>
+          </div>
+        </form>
+
+        <form id="prompt-form" class="panel">
+          <div class="panel-head">
+            <h2>Report prompt</h2>
+            <p id="prompt-status" class="key-status"></p>
+          </div>
+          <p class="panel-text">Tell the AI how to judge a recording and how to write the report. For example: be strict about prices, ignore greetings, or write the report in Bangla.</p>
+          <div class="field">
+            <div class="label-row"><label for="prompt">Prompt</label><span id="prompt-count" class="text-count"></span></div>
+            <textarea id="prompt" rows="12" maxlength="8000" required></textarea>
+            <p class="field-help">The script, the transcript and the report layout are added automatically. New reports use this prompt. To update an old report, open it and press Re-run.</p>
+          </div>
+          <div id="prompt-error" class="error hidden" role="alert"></div>
+          <div class="panel-foot">
+            <button type="button" class="btn" id="btn-default-prompt">Restore default</button>
+            <button class="btn btn-ink" id="btn-save-prompt" disabled>Save prompt</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="editor" class="sheet" aria-labelledby="form-title">
+    <form id="script-form">
+      <div class="sheet-head"><h2 id="form-title">New script</h2></div>
+      <div class="sheet-body">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" maxlength="200" required />
+        </div>
+        <div class="field field-fill">
+          <div class="label-row"><label for="text">What the brand promoter should say</label><span id="text-count" class="text-count"></span></div>
+          <textarea id="text" maxlength="50000" required></textarea>
+        </div>
+        <div class="field">
+          <label for="language">Language</label>
+          <select id="language">
+            <option value="">English or Bangla (auto-detect)</option>
+            <option value="en">English</option>
+            <option value="bn">Bangla</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" id="active" checked /> Show on the recording page</label>
+        <div id="form-error" class="error hidden" role="alert"></div>
+      </div>
+      <div class="sheet-foot">
+        <button type="button" class="btn" id="btn-cancel">Cancel</button>
+        <button class="btn btn-ink" id="btn-save">Add script</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm" class="confirm" aria-labelledby="confirm-title">
+    <form method="dialog">
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-text"></p>
+      <div class="confirm-foot">
+        <button class="btn" value="no">Cancel</button>
+        <button class="btn btn-danger" value="yes" id="confirm-yes">Delete</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="/report.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
