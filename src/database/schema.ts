@@ -1,4 +1,4 @@
-/** Created automatically on first start. Works on MariaDB 10.4 (XAMPP) and MySQL 8. */
+/** Created automatically on first start. Works on MariaDB 10.4 (XAMPP), MySQL 8 and TiDB Cloud. */
 const OPTIONS = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
 
 export const TABLES = [

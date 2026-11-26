@@ -37,6 +37,20 @@ Use your own port if you changed `PORT` in `.env`.
 
 > The camera only works on `http://localhost` or `https://`, so don't open `index.html` directly from the file system.
 
+## Hosting on Render with TiDB Cloud
+
+1. In TiDB Cloud, create a cluster, then press **Connect**. Note the host, port (4000), user and password.
+   Under network access, allow connections from anywhere (`0.0.0.0/0`), because Render's addresses change.
+2. In Render, create a **Web Service** from this repository:
+   - Root Directory: empty
+   - Build Command: `npm ci --include=dev && npm run build`
+   - Start Command: `npm run start:prod`
+   - Add a **Disk**, mount path `/var/data`
+3. Environment variables in Render:
+   `ADMIN_PASSWORD`, `DB_HOST`, `DB_PORT=4000`, `DB_USER`, `DB_PASSWORD`, `DB_NAME=bp_management`,
+   `STORAGE_DIR=/var/data`. Optional: `GEMINI_API_KEY` (or add the key in Settings after logging in).
+4. Deploy. The tables are created on the first start.
+
 ## What the report contains
 
 | Field | Meaning |
