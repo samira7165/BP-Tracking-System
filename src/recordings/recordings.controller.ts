@@ -5,7 +5,9 @@ import {
   Delete,
   Get,
   HttpCode,
+  NotFoundException,
   Param,
+  ParseIntPipe,
   Post,
   Res,
   UploadedFile,
@@ -69,6 +71,14 @@ export class AdminRecordingsController {
     const rec = await this.recordings.get(id);
     res.type(rec.video.mimeType);
     res.sendFile(rec.video.path);
+  }
+
+  /** One of the 3 snapshots the AI looked at. */
+  @Get(':id/snapshots/:n')
+  async snapshot(@Param('id') id: string, @Param('n', ParseIntPipe) n: number, @Res() res: Response) {
+    const rec = await this.recordings.get(id);
+    if (![1, 2, 3].includes(n)) throw new NotFoundException();
+    res.sendFile(this.recordings.snapshotPath(rec.id, n), (e) => e && !res.headersSent && res.sendStatus(404));
   }
 
   /** Run transcription + analysis again (e.g. after fixing the API key). */

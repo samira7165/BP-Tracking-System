@@ -2,6 +2,7 @@ export type RecordingStatus =
   | 'queued'
   | 'extracting_audio'
   | 'transcribing'
+  | 'checking_snapshots'
   | 'analyzing'
   | 'done'
   | 'failed';
@@ -32,6 +33,26 @@ export interface DiffChunk {
 
 export type Verdict = 'MATCHED' | 'PARTIALLY_MATCHED' | 'NOT_MATCHED';
 
+type Rating = { rating: 'good' | 'fair' | 'poor'; note: string };
+
+/** A picture taken from the video: number 1-3 and where in the video, in seconds. */
+export interface Snapshot {
+  n: number;
+  atSec: number;
+}
+
+/** What Gemini saw in the 3 snapshots. Only "error" is set when the check could not be done. */
+export interface Appearance {
+  snapshots: Snapshot[];
+  error?: string;
+  personVisible?: boolean;
+  score?: number;
+  summary?: string;
+  aspects?: Record<'attire' | 'expression' | 'bodyLanguage', Rating>;
+  strengths?: string[];
+  improvements?: string[];
+}
+
 export interface Report {
   verdict: Verdict;
   /** 0-100 score from the AI (or the word accuracy if AI was unavailable) */
@@ -56,6 +77,7 @@ export interface Report {
   analysisModel?: string;
   warning?: string;
   generatedAt: string;
+  appearance?: Appearance;
 }
 
 export interface Recording {

@@ -15,7 +15,7 @@ export class AdminAuthService {
   private readonly key: Buffer;
 
   constructor(config: ConfigService) {
-    this.password = config.get<string>('ADMIN_PASSWORD') || '';
+    this.password = config.get<string>('ADMIN_PASSWORD')?.trim() || '';
     this.key = scryptSync(this.password, 'script-checker-admin-session', 32);
   }
 

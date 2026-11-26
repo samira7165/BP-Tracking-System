@@ -1,6 +1,11 @@
 /** Created automatically on first start. Works on MariaDB 10.4 (XAMPP), MySQL 8 and TiDB Cloud. */
 const OPTIONS = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
 
+/** Columns added after the first version: [table, column, definition]. Added to older databases on start. */
+export const ADDED_COLUMNS: [string, string, string][] = [
+  ['recordings', 'appearance_score', "TINYINT UNSIGNED NULL COMMENT 'Attire, expression and body language 0-100' AFTER overall_score"],
+];
+
 export const TABLES = [
   `CREATE TABLE IF NOT EXISTS scripts (
     id CHAR(36) NOT NULL PRIMARY KEY,
@@ -20,6 +25,7 @@ export const TABLES = [
     status VARCHAR(20) NOT NULL COMMENT 'queued, extracting_audio, transcribing, analyzing, done, failed',
     verdict VARCHAR(20) NULL,
     overall_score TINYINT UNSIGNED NULL COMMENT '0-100',
+    appearance_score TINYINT UNSIGNED NULL COMMENT 'Attire, expression and body language 0-100',
     word_accuracy DECIMAL(5,2) NULL COMMENT 'percent',
     summary TEXT NULL,
     script_text MEDIUMTEXT NOT NULL COMMENT 'Copy, so later edits do not change old results',

@@ -1,8 +1,11 @@
 import { ConflictException, Injectable, Logger, NotFoundException, OnApplicationBootstrap, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { unlink } from 'fs/promises';
+import { join } from 'path';
+import { SNAPSHOT_DIR } from '../common/paths';
 import { friendlyGeminiError } from '../common/gemini';
 import { RetakeError } from '../common/retake-error';
+import { AppearanceService } from '../analysis/appearance.service';
 import { AnalysisService } from '../analysis/analysis.service';
 import { Script } from '../scripts/script.types';
 import { ScriptsService } from '../scripts/scripts.service';
@@ -29,6 +32,7 @@ export class RecordingsService implements OnApplicationBootstrap, OnModuleDestro
     private readonly audio: AudioExtractorService,
     private readonly transcription: TranscriptionService,
     private readonly analysis: AnalysisService,
+    private readonly appearance: AppearanceService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -145,26 +149,41 @@ export class RecordingsService implements OnApplicationBootstrap, OnModuleDestro
     const rec = await this.get(id);
     this.queue.remove(id);
     await unlink(rec.video.path).catch(() => undefined);
+    for (const n of [1, 2, 3]) await unlink(this.snapshotPath(id, n)).catch(() => undefined);
     await this.store.remove(id);
   }
 
-  /** The pipeline: 1. video -> audio, 2. audio -> English or Bangla text, 3. text -> AI report */
+  snapshotPath(id: string, n: number): string {
+    return join(SNAPSHOT_DIR, `${id}-${n}.jpg`);
+  }
+
+  /** The pipeline: 1. video -> audio + 3 snapshots, 2. audio -> text, 3. snapshots -> attire and body language, 4. text -> script report */
   private async process(id: string): Promise<boolean> {
     const rec = await this.store.get(id);
     if (!rec) return false; // deleted while waiting
     try {
       await this.store.update(id, { status: 'extracting_audio', attempts: (rec.attempts ?? 0) + 1 });
       const audio = await this.audio.extract(rec.video.path);
-
-      await this.store.update(id, { status: 'transcribing' });
-      const transcript = await this.transcription
-        .transcribe(audio, rec.language)
+      let transcript;
+      let shots;
+      try {
+        shots = await this.audio.snapshots(rec.video.path, id, audio.durationSec);
+        await this.store.update(id, { status: 'transcribing' });
+        transcript = await this.transcription.transcribe(audio, rec.language);
+      } finally {
         // Only needed for this step; a re-run extracts it again
-        .finally(() => unlink(audio.path).catch(() => undefined));
+        await unlink(audio.path).catch(() => undefined);
+      }
 
-      await this.store.update(id, { transcript, status: 'analyzing' });
+      await this.store.update(id, { transcript, status: 'checking_snapshots' });
+      // The snapshots are kept so the admin can see what the AI saw
+      const appearance = await this.appearance.review(
+        shots.map(({ n, atSec }) => ({ n, atSec })),
+        shots.map((s) => s.path),
+      );
 
-      const report = await this.analysis.analyze(rec.script, transcript.text, rec.language ?? transcript.language);
+      await this.store.update(id, { status: 'analyzing' });
+      const report = { ...(await this.analysis.analyze(rec.script, transcript.text, rec.language ?? transcript.language)), appearance };
       await this.store.update(id, { report, status: 'done' });
       this.logger.log(`Recording ${id} done: ${report.verdict} (${report.overallScore}/100)`);
       return true;

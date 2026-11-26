@@ -96,6 +96,20 @@
           </div>
         </form>
 
+        <form id="dress-form" class="panel">
+          <div class="panel-head">
+            <h2>Dress code</h2>
+            <p id="dress-status" class="key-status"></p>
+          </div>
+          <p class="panel-text">The AI checks 3 snapshots from every recording for attire, facial expression and body language. Describe what brand promoters must wear. Leave it empty to check only that they look neat and professional.</p>
+          <div class="field">
+            <label for="dress-code">What brand promoters must wear</label>
+            <textarea id="dress-code" rows="3" maxlength="1000" placeholder="For example: red brand T-shirt with the logo, black trousers, ID card visible"></textarea>
+          </div>
+          <div id="dress-error" class="error hidden" role="alert"></div>
+          <div class="panel-foot"><button class="btn btn-ink" id="btn-save-dress" disabled>Save dress code</button></div>
+        </form>
+
         <form id="prompt-form" class="panel">
           <div class="panel-head">
             <h2>Report prompt</h2>

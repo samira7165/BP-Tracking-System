@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit, ServiceUnavailableEx
 import { ConfigService } from '@nestjs/config';
 import { createConnection, createPool, Pool, PoolConnection } from 'mysql2/promise';
 import { importJsonFiles } from './import-json';
-import { TABLES } from './schema';
+import { ADDED_COLUMNS, TABLES } from './schema';
 
 export type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -32,19 +32,21 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private ready?: Promise<Pool>;
 
   constructor(config: ConfigService) {
+    // Spaces copied in by accident around a value would make the login fail
+    const env = (name: string) => config.get<string>(name)?.trim() || undefined;
     // Either DATABASE_URL (as TiDB Cloud shows it) or the separate DB_ settings
-    const url = config.get<string>('DATABASE_URL') ? new URL(config.get<string>('DATABASE_URL')!) : undefined;
-    const host = url?.hostname || config.get<string>('DB_HOST') || '127.0.0.1';
-    this.name = config.get<string>('DB_NAME') || url?.pathname.slice(1) || 'bp_management';
+    const url = env('DATABASE_URL') ? new URL(env('DATABASE_URL')!) : undefined;
+    const host = url?.hostname || env('DB_HOST') || '127.0.0.1';
+    this.name = env('DB_NAME') || url?.pathname.slice(1) || 'bp_management';
     if (!/^\w+$/.test(this.name)) throw new Error('DB_NAME may only contain letters, numbers and underscores');
     this.local = ['127.0.0.1', 'localhost', '::1'].includes(host);
     // TiDB Cloud only accepts encrypted connections
-    const ssl = config.get<string>('DB_SSL') ? config.get<string>('DB_SSL') === 'true' : /\.tidbcloud\.com$/i.test(host);
+    const ssl = env('DB_SSL') ? env('DB_SSL') === 'true' : /\.tidbcloud\.com$/i.test(host);
     this.connection = {
       host,
-      port: Number(url?.port || config.get('DB_PORT')) || 3306,
-      user: url ? decodeURIComponent(url.username) : config.get<string>('DB_USER') || 'root',
-      password: url ? decodeURIComponent(url.password) : config.get<string>('DB_PASSWORD') || '',
+      port: Number(url?.port || env('DB_PORT')) || 3306,
+      user: url ? decodeURIComponent(url.username) : env('DB_USER') || 'root',
+      password: url ? decodeURIComponent(url.password) : env('DB_PASSWORD') || '',
       ssl: ssl ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
       charset: 'utf8mb4',
       timezone: 'Z',
@@ -108,6 +110,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       });
       try {
         for (const table of TABLES) await pool.query(table);
+        for (const [table, column, definition] of ADDED_COLUMNS) {
+          const [found] = await pool.query('SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?', [this.name, table, column]);
+          if (!(found as unknown[]).length) await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+        }
         await this.importOldFiles(pool);
       } catch (e) {
         await pool.end().catch(() => undefined);

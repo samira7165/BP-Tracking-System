@@ -61,6 +61,7 @@ export class SettingsService {
         defaultText: DEFAULT_REPORT_PROMPT,
         isDefault: text === DEFAULT_REPORT_PROMPT,
       },
+      dressCode: await this.dressCode(),
     };
   }
 
@@ -85,6 +86,17 @@ export class SettingsService {
     delete this.settings.geminiApiKey;
     await this.flush();
     this.logger.log('Gemini API key removed from the dashboard');
+  }
+
+  /** What brand promoters must wear, written by the admin. Empty = "neat and professional". */
+  async dressCode(): Promise<string> {
+    const [row] = await this.db.query<{ value: string }>("SELECT value FROM settings WHERE name = 'dress_code'");
+    return row?.value ?? '';
+  }
+
+  async saveDressCode(text: string) {
+    if (!text) await this.db.query("DELETE FROM settings WHERE name = 'dress_code'");
+    else await this.db.query("REPLACE INTO settings SET name = 'dress_code', value = ?, updated_at = ?", [text, new Date()]);
   }
 
   /** An empty prompt goes back to the default. */

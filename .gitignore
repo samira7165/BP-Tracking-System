@@ -4,3 +4,6 @@ dist/
 uploads/
 data/
 *.tsbuildinfo
+
+# Settings to paste into Render (contains passwords)
+.env.render

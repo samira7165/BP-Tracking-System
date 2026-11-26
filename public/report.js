@@ -30,8 +30,9 @@ function queueLabel(queue) {
 const statusLabel = (rec) =>
   ({
     queued: queueLabel(rec.queue),
-    extracting_audio: 'Getting the audio out of the video…',
+    extracting_audio: 'Getting the audio and 3 snapshots from the video…',
     transcribing: 'Turning the audio into English or Bangla text…',
+    checking_snapshots: 'The AI is checking attire and body language in 3 snapshots…',
     analyzing: 'The AI is comparing the text with the script…',
     done: 'Done',
     failed: 'This recording could not be checked.',
@@ -52,6 +53,27 @@ function renderDiff(diff) {
 /** A titled list, or nothing at all when there is nothing to list. */
 const listSection = (title, items) =>
   items?.length ? `<section class="rp-list"><h3>${title}</h3><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul></section>` : '';
+
+const ASPECTS = { attire: 'Attire', expression: 'Facial expression', bodyLanguage: 'Body language' };
+const RATINGS = { good: 'Good', fair: 'Fair', poor: 'Poor' };
+
+/** The 3 snapshots and what Gemini saw in them. */
+function appearanceSection(id, a) {
+  if (!a) return '';
+  const shots = (a.snapshots || [])
+    .map((s) => `<figure><img src="${API}/${esc(id)}/snapshots/${Number(s.n)}" alt="Snapshot ${Number(s.n)}" loading="lazy" /><figcaption>At ${fmtTime(s.atSec)}</figcaption></figure>`)
+    .join('');
+  const head = (score) => `<div class="rp-look-head"><h3>Attire and body language</h3>${score}</div>`;
+  const body = a.error
+    ? `<p class="warning">${esc(a.error)}</p>`
+    : `<p class="rp-summary">${esc(a.summary)}</p>
+      <dl class="rp-aspects">${Object.entries(ASPECTS)
+        .filter(([k]) => a.aspects?.[k])
+        .map(([k, label]) => `<div><dt>${label}</dt><dd><span class="rating ${esc(a.aspects[k].rating)}">${RATINGS[a.aspects[k].rating] || ''}</span> ${esc(a.aspects[k].note)}</dd></div>`)
+        .join('')}</dl>
+      <div class="rp-lists rp-lists-look">${listSection('Did well', (a.strengths || []).map(esc))}${listSection('To improve', (a.improvements || []).map(esc))}</div>`;
+  return `<section class="rp-look">${head(a.error ? '' : `<p class="rp-look-score"><b>${Number(a.score)}</b>/100</p>`)}<div class="shots">${shots}</div>${body}</section>`;
+}
 
 /** Fills #report (admin dashboard only). window.reprocess is in admin.js. */
 function showReport(rec) {
@@ -116,6 +138,8 @@ function showReport(rec) {
     </section>
 
     ${lists ? `<div class="rp-lists">${lists}</div>` : ''}
+
+    ${appearanceSection(rec.id, r.appearance)}
 
     <div class="rp-media">
       <section>

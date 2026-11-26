@@ -13,6 +13,13 @@ class ApiKeyDto {
   apiKey!: string;
 }
 
+class DressCodeDto {
+  @Trim()
+  @IsString()
+  @MaxLength(1000, { message: 'The dress code can be at most 1000 characters.' })
+  dressCode!: string;
+}
+
 class PromptDto {
   @Trim()
   @IsString()
@@ -39,6 +46,12 @@ export class SettingsController {
   @Delete('api-key')
   async removeApiKey() {
     await this.settings.removeApiKey();
+    return this.settings.toPublic();
+  }
+
+  @Put('dress-code')
+  async saveDressCode(@Body() dto: DressCodeDto) {
+    await this.settings.saveDressCode(dto.dressCode);
     return this.settings.toPublic();
   }
 

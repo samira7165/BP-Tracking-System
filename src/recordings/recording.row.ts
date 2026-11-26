@@ -12,6 +12,7 @@ export interface RecordingSummary {
   status: RecordingStatus;
   verdict?: Verdict;
   overallScore?: number;
+  appearanceScore?: number;
   error?: string;
   needsRetake?: boolean;
 }
@@ -43,6 +44,7 @@ export function recordingToRow(rec: Partial<Recording>): Row {
     row.report = r ? JSON.stringify(r) : null;
     row.verdict = r?.verdict ?? null;
     row.overall_score = r?.overallScore ?? null;
+    row.appearance_score = r?.appearance?.score ?? null;
     row.word_accuracy = r?.wordAccuracy ?? null;
     row.summary = r?.summary ?? null;
   }
@@ -102,6 +104,7 @@ export function rowToSummary(row: Row): RecordingSummary {
     status: row.status,
     verdict: row.verdict ?? undefined,
     overallScore: row.overall_score ?? undefined,
+    appearanceScore: row.appearance_score ?? undefined,
     error: row.error ?? undefined,
     needsRetake: !!row.needs_retake,
   };

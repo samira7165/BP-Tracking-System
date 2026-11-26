@@ -296,13 +296,14 @@ function renderHistory() {
   }
   $('history').innerHTML = items.length
     ? `<table>
-        <thead><tr><th>Brand promoter</th><th>Script</th><th>Result</th><th>Recorded</th><th><span class="sr">Actions</span></th></tr></thead>
+        <thead><tr><th>Brand promoter</th><th>Script</th><th>Script check</th><th>Appearance</th><th>Recorded</th><th><span class="sr">Actions</span></th></tr></thead>
         <tbody>${items
           .map(
             (r) => `<tr>
               <td class="cell-main"><a class="row-title" href="#recordings/${r.id}">${esc(r.speaker || 'No name given')}</a></td>
               <td data-l="Script">${esc(r.title || 'Untitled')}</td>
-              <td data-l="Result">${resultCell(r)}</td>
+              <td data-l="Script check">${resultCell(r)}</td>
+              <td data-l="Appearance" class="num">${r.appearanceScore == null ? '<span class="result busy">–</span>' : `<b>${r.appearanceScore}</b>/100`}</td>
               <td data-l="Recorded" class="num">${fmtDate(r.createdAt)}</td>
               <td class="cell-actions">
                 <a class="link" href="#recordings/${r.id}">View</a>
@@ -384,6 +385,11 @@ function showSettings(data) {
   $('prompt-status').classList.toggle('on', !data.prompt.isDefault);
   // Never overwrite what the admin is typing
   if (!editing) $('prompt').value = data.prompt.text;
+  if (!dressChanged) $('dress-code').value = data.dressCode;
+  dressChanged = false;
+  $('dress-status').textContent = data.dressCode ? 'Dress code set' : 'Neat and professional';
+  $('dress-status').classList.toggle('on', !!data.dressCode);
+  $('btn-save-dress').disabled = true;
   updatePrompt();
   showSetup();
 }
@@ -425,6 +431,23 @@ $('btn-remove-key').onclick = async () => {
     toast('Key removed');
   } catch (err) {
     toast(err.message, true);
+  }
+};
+
+let dressChanged = false;
+$('dress-code').oninput = () => {
+  dressChanged = true;
+  $('btn-save-dress').disabled = !settings || $('dress-code').value.trim() === settings.dressCode;
+};
+
+$('dress-form').onsubmit = async (e) => {
+  e.preventDefault();
+  showError('dress-error');
+  try {
+    showSettings(await api('/api/admin/settings/dress-code', { method: 'PUT', body: { dressCode: $('dress-code').value } }));
+    toast('Dress code saved. New recordings will be checked against it.');
+  } catch (err) {
+    showError('dress-error', err.message);
   }
 };
 

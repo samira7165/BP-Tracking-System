@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { AdminModule } from '../admin/admin.module';
+import { AppearanceService } from '../analysis/appearance.service';
 import { AnalysisService } from '../analysis/analysis.service';
 import { UPLOADS_DIR, ensureDirs } from '../common/paths';
 import { SettingsModule } from '../settings/settings.module';
@@ -55,6 +56,7 @@ function extensionFor(file: Express.Multer.File): string {
     AudioExtractorService,
     TranscriptionService,
     AnalysisService,
+    AppearanceService,
   ],
 })
 export class RecordingsModule {}

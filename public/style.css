@@ -226,6 +226,23 @@ input:-webkit-autofill:focus { box-shadow: inset 0 0 0 40px var(--paper), 0 0 0 
 .rp-lists li { padding: 8px 0 6px; border-bottom: 1px solid var(--line-soft); overflow-wrap: anywhere; }
 .rp-lists li:last-child { border-bottom: 0; }
 .rp-lists small { display: block; font-size: .92rem; color: var(--ink-2); }
+.rp-look { padding: 24px 0 28px; border-top: 1px solid var(--line); }
+.rp-look-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.rp-look-score { color: var(--ink-2); }
+.rp-look-score b { font-size: 1.8rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0 16px; }
+.shots figure { margin: 0; }
+.shots img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: contain; background: #111; border-radius: var(--r); }
+.shots figcaption { margin-top: 4px; font-size: .88rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.rp-look .rp-summary { margin: 0 0 14px; }
+.rp-aspects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px 36px; }
+.rp-aspects dt { font-weight: 600; }
+.rp-aspects dd { color: var(--ink-2); }
+.rating { display: inline-block; margin-right: 6px; padding: 1px 8px 0; border-radius: var(--r); font-size: .85rem; font-weight: 600; }
+.rating.good { background: #d7efdf; color: var(--ok); }
+.rating.fair { background: var(--mark-soft); color: var(--warn); }
+.rating.poor { background: var(--bad-soft); color: var(--bad); }
+.rp-lists-look { padding: 18px 0 0; border-top: 0; }
 .rp-media { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px 44px; padding: 24px 0 28px; border-top: 1px solid var(--line); }
 .rp-media h3 { margin-bottom: 10px; }
 .rp-media video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: var(--r); }
@@ -409,3 +426,4 @@ tbody tr:hover td { background: #fffaea; }
   .segments { max-height: none; }
   ins { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+#dress-code { min-height: 90px; }
