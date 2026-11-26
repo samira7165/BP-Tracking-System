@@ -247,6 +247,8 @@ input:-webkit-autofill:focus { box-shadow: inset 0 0 0 40px var(--paper), 0 0 0 
 .kw-count { font-weight: 600; color: var(--ink); }
 .kw-all { color: var(--ok); }
 .kw-some { color: var(--bad); }
+/* Keywords inside the script: like a highlighter pen */
+.script-text mark.kw { padding: 0 .12em; border-radius: 3px; background: var(--mark); color: var(--ink); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .script-keywords { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .script-keywords h3 { font-size: 1rem; font-weight: 600; color: var(--ink-2); }
 .script-keywords ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }

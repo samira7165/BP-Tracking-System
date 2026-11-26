@@ -90,11 +90,36 @@ function updateButtons() {
 }
 
 // ---------- scripts (written by the admin) ----------
+/**
+ * The script as HTML with every keyword marked. Longer keywords win ("10% cashback" before
+ * "cashback"). A keyword must start a word; English ones must also end it (an "s" may follow).
+ */
+function markKeywords(text, keywords) {
+  const words = [...new Set(keywords.map((k) => k.trim()).filter(Boolean))].sort((a, b) => b.length - a.length);
+  if (!words.length) return esc(text);
+  const pattern = words
+    .map((k) => {
+      const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+      // Bangla: mark the whole word with its ending (বিকাশে), so no vowel sign is cut off
+      return /\p{Script=Bengali}$/u.test(k) ? `${escaped}[\\p{L}\\p{M}]*` : `${escaped}(?:s|es)?(?![\\p{L}\\p{N}\\p{M}])`;
+    })
+    .join('|');
+  const re = new RegExp(`(?<![\\p{L}\\p{N}\\p{M}])(?:${pattern})`, 'giu');
+  let html = '';
+  let last = 0;
+  for (const m of text.normalize('NFC').matchAll(re)) {
+    html += esc(text.normalize('NFC').slice(last, m.index)) + `<mark class="kw">${esc(m[0])}</mark>`;
+    last = m.index + m[0].length;
+  }
+  return html + esc(text.normalize('NFC').slice(last));
+}
+
 function showScript() {
   const script = currentScript();
-  $('script-title').textContent = script ? script.title : 'Your script';
-  $('script-text').textContent = script ? script.text : 'The script you should say will appear here.';
   const keywords = script?.keywords || [];
+  $('script-title').textContent = script ? script.title : 'Your script';
+  if (script) $('script-text').innerHTML = markKeywords(script.text, keywords);
+  else $('script-text').textContent = 'The script you should say will appear here.';
   $('script-keywords').classList.toggle('hidden', !keywords.length);
   $('keyword-list').innerHTML = keywords.map((k) => `<li>${esc(k)}</li>`).join('');
   $('script-scroll').scrollTop = 0;
