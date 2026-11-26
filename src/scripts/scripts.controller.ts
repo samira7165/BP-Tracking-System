@@ -10,7 +10,7 @@ export class ScriptsController {
 
   @Get()
   async list() {
-    return (await this.scripts.active()).map(({ id, title, text, updatedAt }) => ({ id, title, text, updatedAt }));
+    return (await this.scripts.active()).map(({ id, title, text, keywords, updatedAt }) => ({ id, title, text, keywords, updatedAt }));
   }
 }
 

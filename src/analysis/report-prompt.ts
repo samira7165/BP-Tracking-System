@@ -20,7 +20,13 @@ Reply ONLY with JSON of this shape:
   "changedParts": [{"expected": "script phrase", "spoken": "what was said", "note": "why it matters"}],
   "suggestions": ["short tips for the next recording"]
 }
-Guide: MATCHED = 85+, PARTIALLY_MATCHED = 50-84, NOT_MATCHED = below 50.`;
+Guide: MATCHED = 85+, PARTIALLY_MATCHED = 50-84, NOT_MATCHED = below 50.
+
+When REQUIRED KEYWORDS are given, the brand promoter must say every one of them.
+Each keyword that was not said is a serious mistake: lower the score and name it in missingParts.
+Fill "keywords" with one entry per required keyword: said = true if it was said, also with a small
+speech-to-text spelling difference, a grammatical ending, or the same word in Bangla or English;
+heardAs = the words actually heard, when they differ from the keyword.`;
 
 /** Gemini is made to follow this shape exactly. */
 export const REPORT_SCHEMA = {
@@ -40,6 +46,14 @@ export const REPORT_SCHEMA = {
       },
     },
     suggestions: { type: 'array', items: { type: 'string' } },
+    keywords: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { keyword: { type: 'string' }, said: { type: 'boolean' }, heardAs: { type: 'string' } },
+        required: ['keyword', 'said'],
+      },
+    },
   },
   required: ['verdict', 'overallScore', 'summary', 'missingParts', 'addedParts', 'changedParts', 'suggestions'],
 };

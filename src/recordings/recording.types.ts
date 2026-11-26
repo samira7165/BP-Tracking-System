@@ -53,6 +53,14 @@ export interface Appearance {
   improvements?: string[];
 }
 
+/** Was a required keyword said? "exact" = found by code, "ai" = the AI heard it said differently. */
+export interface KeywordResult {
+  keyword: string;
+  said: boolean;
+  how: 'exact' | 'ai';
+  heardAs?: string;
+}
+
 export interface Report {
   verdict: Verdict;
   /** 0-100 score from the AI (or the word accuracy if AI was unavailable) */
@@ -78,6 +86,7 @@ export interface Report {
   warning?: string;
   generatedAt: string;
   appearance?: Appearance;
+  keywords?: KeywordResult[];
 }
 
 export interface Recording {
@@ -92,6 +101,8 @@ export interface Recording {
   /** Copy of the script text, so later edits don't change old reports */
   script: string;
   language?: string;
+  /** Copy of the script's keywords at the time of recording */
+  keywords?: string[];
   video: {
     fileName: string;
     path: string;

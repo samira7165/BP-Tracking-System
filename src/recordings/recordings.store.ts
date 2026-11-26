@@ -10,7 +10,7 @@ export class RecordingsStore {
   /** Newest first, without the long texts. */
   async list(): Promise<RecordingSummary[]> {
     const rows = await this.db.query(
-      `SELECT id, script_title, bp_name, created_at, status, verdict, overall_score, appearance_score, error, needs_retake
+      `SELECT id, script_title, bp_name, created_at, status, verdict, overall_score, appearance_score, keywords_said, keywords_total, error, needs_retake
        FROM recordings ORDER BY created_at DESC, id`,
     );
     return rows.map(rowToSummary);

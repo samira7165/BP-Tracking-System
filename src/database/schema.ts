@@ -3,6 +3,10 @@ const OPTIONS = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_c
 
 /** Columns added after the first version: [table, column, definition]. Added to older databases on start. */
 export const ADDED_COLUMNS: [string, string, string][] = [
+  ['scripts', 'keywords', "TEXT NULL COMMENT 'Words the BP must say, JSON list' AFTER language"],
+  ['recordings', 'script_keywords', "TEXT NULL COMMENT 'Copy of the keywords, JSON list' AFTER script_language"],
+  ['recordings', 'keywords_said', "TINYINT UNSIGNED NULL AFTER appearance_score"],
+  ['recordings', 'keywords_total', "TINYINT UNSIGNED NULL AFTER keywords_said"],
   ['recordings', 'appearance_score', "TINYINT UNSIGNED NULL COMMENT 'Attire, expression and body language 0-100' AFTER overall_score"],
 ];
 
@@ -12,6 +16,7 @@ export const TABLES = [
     title VARCHAR(200) NOT NULL,
     text MEDIUMTEXT NOT NULL,
     language VARCHAR(10) NULL COMMENT 'en, bn, or empty for auto-detect',
+    keywords TEXT NULL COMMENT 'Words the BP must say, JSON list',
     active TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = shown to brand promoters',
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
@@ -26,10 +31,13 @@ export const TABLES = [
     verdict VARCHAR(20) NULL,
     overall_score TINYINT UNSIGNED NULL COMMENT '0-100',
     appearance_score TINYINT UNSIGNED NULL COMMENT 'Attire, expression and body language 0-100',
+    keywords_said TINYINT UNSIGNED NULL,
+    keywords_total TINYINT UNSIGNED NULL,
     word_accuracy DECIMAL(5,2) NULL COMMENT 'percent',
     summary TEXT NULL,
     script_text MEDIUMTEXT NOT NULL COMMENT 'Copy, so later edits do not change old results',
     script_language VARCHAR(10) NULL,
+    script_keywords TEXT NULL COMMENT 'Copy of the keywords, JSON list',
     transcript MEDIUMTEXT NULL COMMENT 'What the brand promoter said',
     transcript_language VARCHAR(20) NULL,
     transcript_model VARCHAR(60) NULL,

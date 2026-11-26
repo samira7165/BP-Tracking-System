@@ -30,6 +30,7 @@ export class ScriptsService {
       text: dto.text,
       language: dto.language || undefined,
       active: dto.active ?? true,
+      keywords: dto.keywords ?? [],
       createdAt: now,
       updatedAt: now,
     };
@@ -45,6 +46,7 @@ export class ScriptsService {
       text: dto.text,
       language: dto.language || undefined,
       active: dto.active ?? old.active,
+      keywords: dto.keywords ?? old.keywords,
       updatedAt: new Date().toISOString(),
     };
     await this.store.update(script);

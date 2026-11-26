@@ -139,7 +139,9 @@ function showSetup() {
 }
 
 // ---------- scripts ----------
-const payload = (s) => ({ title: s.title, text: s.text, language: s.language || '', active: s.active });
+/** "a, b" or one per line -> ["a", "b"] */
+const splitKeywords = (text) => text.split(/[,\n،]/).map((k) => k.trim()).filter(Boolean);
+const payload = (s) => ({ title: s.title, text: s.text, language: s.language || '', active: s.active, keywords: s.keywords || [] });
 
 async function loadScripts() {
   try {
@@ -159,7 +161,7 @@ async function loadScripts() {
         <tbody>${scripts
           .map(
             (s) => `<tr>
-              <td class="cell-main"><button class="row-title" onclick="editScript('${s.id}')">${esc(s.title)}</button><span class="excerpt">${esc(s.text.slice(0, 140))}</span></td>
+              <td class="cell-main"><button class="row-title" onclick="editScript('${s.id}')">${esc(s.title)}</button><span class="excerpt">${s.keywords?.length ? `<b class="kw-count">${s.keywords.length} keyword${s.keywords.length === 1 ? '' : 's'}</b> ` : ''}${esc(s.text.slice(0, 140))}</span></td>
               <td data-l="Language">${esc(LANGUAGES[s.language] || s.language || 'English or Bangla')}</td>
               <td data-l="Recording page"><span class="state ${s.active ? 'on' : ''}">${s.active ? 'Shown' : 'Hidden'}</span></td>
               <td data-l="Updated" class="num">${fmtDate(s.updatedAt)}</td>
@@ -181,6 +183,7 @@ function openEditor(script) {
   if (script) {
     $('title').value = script.title;
     $('text').value = script.text;
+    $('keywords').value = (script.keywords || []).join(', ');
     $('language').value = script.language || '';
     $('active').checked = script.active;
   }
@@ -206,7 +209,7 @@ $('script-form').onsubmit = async (e) => {
   e.preventDefault();
   showError('form-error');
   $('btn-save').disabled = true;
-  const body = payload({ title: $('title').value, text: $('text').value, language: $('language').value, active: $('active').checked });
+  const body = payload({ title: $('title').value, text: $('text').value, language: $('language').value, active: $('active').checked, keywords: splitKeywords($('keywords').value) });
   try {
     if (editingId) await api(`/api/admin/scripts/${editingId}`, { method: 'PUT', body });
     else await api('/api/admin/scripts', { method: 'POST', body });
@@ -296,13 +299,14 @@ function renderHistory() {
   }
   $('history').innerHTML = items.length
     ? `<table>
-        <thead><tr><th>Brand promoter</th><th>Script</th><th>Script check</th><th>Appearance</th><th>Recorded</th><th><span class="sr">Actions</span></th></tr></thead>
+        <thead><tr><th>Brand promoter</th><th>Script</th><th>Script check</th><th>Keywords</th><th>Appearance</th><th>Recorded</th><th><span class="sr">Actions</span></th></tr></thead>
         <tbody>${items
           .map(
             (r) => `<tr>
               <td class="cell-main"><a class="row-title" href="#recordings/${r.id}">${esc(r.speaker || 'No name given')}</a></td>
               <td data-l="Script">${esc(r.title || 'Untitled')}</td>
               <td data-l="Script check">${resultCell(r)}</td>
+              <td data-l="Keywords" class="num">${r.keywordsTotal ? `<span class="${r.keywordsSaid === r.keywordsTotal ? 'kw-all' : 'kw-some'}"><b>${r.keywordsSaid}</b> of ${r.keywordsTotal}</span>` : '<span class="result busy">–</span>'}</td>
               <td data-l="Appearance" class="num">${r.appearanceScore == null ? '<span class="result busy">–</span>' : `<b>${r.appearanceScore}</b>/100`}</td>
               <td data-l="Recorded" class="num">${fmtDate(r.createdAt)}</td>
               <td class="cell-actions">

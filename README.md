@@ -10,7 +10,7 @@ Browser (record) ──upload──▶ NestJS ──▶ uploads/  (video saved)
                                  ├─ Gemini 3.5 Transcribe: audio → English or Bangla text
                                  ├─ Word-by-word diff (code, free)
                                  ├─ ffmpeg: 3 snapshots (at 25%, 50%, 75%) → Gemini: attire, expression, body language
-                                 └─ Gemini 3.5 Flash-Lite: script vs transcript → verdict + report
+                                 └─ Gemini 3.5 Flash-Lite: script vs transcript + required keywords (code checks exact matches first) → verdict + report
 ```
 
 ## Run it in VS Code

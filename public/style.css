@@ -235,6 +235,22 @@ input:-webkit-autofill:focus { box-shadow: inset 0 0 0 40px var(--paper), 0 0 0 
 .rp-lists li { padding: 8px 0 6px; border-bottom: 1px solid var(--line-soft); overflow-wrap: anywhere; }
 .rp-lists li:last-child { border-bottom: 0; }
 .rp-lists small { display: block; font-size: .92rem; color: var(--ink-2); }
+.rp-keywords { padding: 24px 0 26px; border-top: 1px solid var(--line); }
+.kw-list { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.kw-list li { display: flex; align-items: center; gap: 8px; padding: 6px 12px 4px; border-radius: var(--r); }
+.kw-list li.yes { background: #d7efdf; }
+.kw-list li.no { background: var(--bad-soft); }
+.kw-list small { color: var(--ink-2); }
+.kw-mark { font-weight: 700; }
+.kw-list .yes .kw-mark { color: var(--ok); }
+.kw-list .no .kw-mark { color: var(--bad); }
+.kw-count { font-weight: 600; color: var(--ink); }
+.kw-all { color: var(--ok); }
+.kw-some { color: var(--bad); }
+.script-keywords { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.script-keywords h3 { font-size: 1rem; font-weight: 600; color: var(--ink-2); }
+.script-keywords ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.script-keywords li { padding: 4px 10px 2px; background: var(--mark); border-radius: var(--r); font-weight: 600; }
 .rp-look { padding: 24px 0 28px; border-top: 1px solid var(--line); }
 .rp-look-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
 .rp-look-score { color: var(--ink-2); }

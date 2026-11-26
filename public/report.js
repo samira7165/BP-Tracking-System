@@ -57,6 +57,20 @@ const listSection = (title, items) =>
 const ASPECTS = { attire: 'Attire', expression: 'Facial expression', bodyLanguage: 'Body language' };
 const RATINGS = { good: 'Good', fair: 'Fair', poor: 'Poor' };
 
+/** Each required keyword: said or not. */
+function keywordSection(list) {
+  if (!list?.length) return '';
+  const said = list.filter((k) => k.said).length;
+  return `<section class="rp-keywords">
+    <div class="rp-look-head"><h3>Keywords</h3><p class="rp-look-score"><b>${said}</b> of ${list.length} said</p></div>
+    <ul class="kw-list">${list
+      .map((k) => `<li class="${k.said ? 'yes' : 'no'}"><span class="kw-mark" aria-hidden="true">${k.said ? '✓' : '✗'}</span><span><b>${esc(k.keyword)}</b>${
+        k.said ? (k.heardAs ? ` <small>said as “${esc(k.heardAs)}”</small>` : '') : ' <small>not said</small>'
+      }</span></li>`)
+      .join('')}</ul>
+  </section>`;
+}
+
 /** The 3 snapshots and what Gemini saw in them. */
 function appearanceSection(id, a) {
   if (!a) return '';
@@ -215,6 +229,8 @@ function showReport(rec) {
     </section>
 
     ${lists ? `<div class="rp-lists">${lists}</div>` : ''}
+
+    ${keywordSection(r.keywords)}
 
     ${appearanceSection(rec.id, r.appearance)}
 

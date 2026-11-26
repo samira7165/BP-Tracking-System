@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { friendlyGeminiError, GeminiClient } from '../common/gemini';
-import { Report, Verdict } from '../recordings/recording.types';
+import { KeywordResult, Report, Verdict } from '../recordings/recording.types';
 import { SettingsService } from '../settings/settings.service';
 import { buildSystemPrompt, REPORT_SCHEMA } from './report-prompt';
+import { findKeywords } from './keywords';
 import { compareTexts, DiffResult } from './text-diff';
 
 interface AiResult {
@@ -14,6 +15,7 @@ interface AiResult {
   addedParts: string[];
   changedParts: { expected: string; spoken: string; note?: string }[];
   suggestions: string[];
+  keywords: { keyword: string; said: boolean; heardAs?: string }[];
 }
 
 @Injectable()
@@ -28,9 +30,11 @@ export class AnalysisService {
     this.model = config.get<string>('ANALYSIS_MODEL') || 'gemini-3.5-flash-lite';
   }
 
-  async analyze(script: string, transcript: string, language?: string): Promise<Report> {
+  async analyze(script: string, transcript: string, language?: string, keywords: string[] = []): Promise<Report> {
     const diff = compareTexts(script, transcript);
-    const base = this.localReport(diff);
+    // Checked by code first, for free; the AI only decides about the ones not found exactly
+    const found = findKeywords(keywords, transcript);
+    const base = { ...this.localReport(diff), ...(keywords.length ? { keywords: found } : {}) };
 
     const gemini = this.settings.gemini();
     if (!gemini) {
@@ -38,7 +42,7 @@ export class AnalysisService {
     }
 
     try {
-      const ai = await this.askAi(gemini, script, transcript, diff, language);
+      const ai = await this.askAi(gemini, script, transcript, diff, language, found);
       return {
         ...base,
         verdict: ai.verdict,
@@ -48,6 +52,7 @@ export class AnalysisService {
         addedParts: ai.addedParts,
         changedParts: ai.changedParts,
         suggestions: ai.suggestions,
+        ...(keywords.length ? { keywords: mergeKeywords(found, ai.keywords) } : {}),
         generatedBy: 'ai+local',
         analysisModel: this.model,
       };
@@ -57,11 +62,14 @@ export class AnalysisService {
     }
   }
 
-  private async askAi(gemini: GeminiClient, script: string, transcript: string, diff: DiffResult, language?: string): Promise<AiResult> {
+  private async askAi(gemini: GeminiClient, script: string, transcript: string, diff: DiffResult, language?: string, keywords: KeywordResult[] = []): Promise<AiResult> {
     const user = [
       language ? `Expected language: ${language}` : '',
       `Word-level match computed by code: ${diff.accuracy}% of script words were spoken in order ` +
         `(${diff.missing} missing, ${diff.changed} changed, ${diff.extra} extra). Use it as a hint, not the final answer.`,
+      keywords.length
+        ? `REQUIRED KEYWORDS (the code already found the ones marked yes, word for word):\n${keywords.map((k) => `- ${k.keyword} (found: ${k.said ? 'yes' : 'no'})`).join('\n')}`
+        : '',
       `SCRIPT:\n"""\n${script}\n"""`,
       `TRANSCRIPT:\n"""\n${transcript || '(no speech detected)'}\n"""`,
     ]
@@ -96,6 +104,15 @@ export class AnalysisService {
             }))
         : [],
       suggestions: strings(raw.suggestions),
+      keywords: Array.isArray(raw.keywords)
+        ? raw.keywords
+            .filter((k: unknown) => k && typeof k === 'object')
+            .map((k: { keyword?: unknown; said?: unknown; heardAs?: unknown }) => ({
+              keyword: String(k.keyword ?? ''),
+              said: k.said === true,
+              heardAs: k.heardAs ? String(k.heardAs) : undefined,
+            }))
+        : [],
     };
   }
 
@@ -136,6 +153,16 @@ function parseAnswer(answer: string) {
     // falls through
   }
   throw new Error('It sent an answer that could not be read.');
+}
+
+/** Found by code stays found. Otherwise the AI's answer decides. */
+function mergeKeywords(found: KeywordResult[], ai: AiResult['keywords']): KeywordResult[] {
+  const same = (a: string, b: string) => a.normalize('NFC').trim().toLowerCase() === b.normalize('NFC').trim().toLowerCase();
+  return found.map((k) => {
+    if (k.said) return k;
+    const answer = ai.find((a) => same(a.keyword, k.keyword));
+    return answer?.said ? { keyword: k.keyword, said: true, how: 'ai', heardAs: answer.heardAs } : k;
+  });
 }
 
 function clamp(n: number, min: number, max: number) {

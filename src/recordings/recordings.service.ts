@@ -86,6 +86,7 @@ export class RecordingsService implements OnApplicationBootstrap, OnModuleDestro
       queuedAt: now,
       script: script.text,
       language: script.language,
+      keywords: script.keywords,
       video: {
         fileName: file.filename,
         path: file.path,
@@ -183,7 +184,7 @@ export class RecordingsService implements OnApplicationBootstrap, OnModuleDestro
       );
 
       await this.store.update(id, { status: 'analyzing' });
-      const report = { ...(await this.analysis.analyze(rec.script, transcript.text, rec.language ?? transcript.language)), appearance };
+      const report = { ...(await this.analysis.analyze(rec.script, transcript.text, rec.language ?? transcript.language, rec.keywords ?? [])), appearance };
       await this.store.update(id, { report, status: 'done' });
       this.logger.log(`Recording ${id} done: ${report.verdict} (${report.overallScore}/100)`);
       return true;

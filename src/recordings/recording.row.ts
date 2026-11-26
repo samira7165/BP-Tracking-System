@@ -13,6 +13,8 @@ export interface RecordingSummary {
   verdict?: Verdict;
   overallScore?: number;
   appearanceScore?: number;
+  keywordsSaid?: number;
+  keywordsTotal?: number;
   error?: string;
   needsRetake?: boolean;
 }
@@ -27,6 +29,7 @@ export function recordingToRow(rec: Partial<Recording>): Row {
   if (has('status')) row.status = rec.status;
   if (has('script')) row.script_text = rec.script;
   if (has('language')) row.script_language = rec.language ?? null;
+  if (has('keywords')) row.script_keywords = rec.keywords?.length ? JSON.stringify(rec.keywords) : null;
   if (has('error')) row.error = rec.error ?? null;
   if (has('needsRetake')) row.needs_retake = rec.needsRetake ? 1 : 0;
   if (has('attempts')) row.attempts = rec.attempts ?? 0;
@@ -45,6 +48,8 @@ export function recordingToRow(rec: Partial<Recording>): Row {
     row.verdict = r?.verdict ?? null;
     row.overall_score = r?.overallScore ?? null;
     row.appearance_score = r?.appearance?.score ?? null;
+    row.keywords_said = r?.keywords ? r.keywords.filter((k) => k.said).length : null;
+    row.keywords_total = r?.keywords ? r.keywords.length : null;
     row.word_accuracy = r?.wordAccuracy ?? null;
     row.summary = r?.summary ?? null;
   }
@@ -70,6 +75,7 @@ export function rowToRecording(row: Row): Recording {
     status: row.status,
     script: row.script_text,
     language: row.script_language ?? undefined,
+    keywords: row.script_keywords ? JSON.parse(row.script_keywords) : [],
     video: {
       fileName,
       path: join(UPLOADS_DIR, fileName),
@@ -105,6 +111,8 @@ export function rowToSummary(row: Row): RecordingSummary {
     verdict: row.verdict ?? undefined,
     overallScore: row.overall_score ?? undefined,
     appearanceScore: row.appearance_score ?? undefined,
+    keywordsSaid: row.keywords_said ?? undefined,
+    keywordsTotal: row.keywords_total ?? undefined,
     error: row.error ?? undefined,
     needsRetake: !!row.needs_retake,
   };

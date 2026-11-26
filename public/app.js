@@ -94,6 +94,9 @@ function showScript() {
   const script = currentScript();
   $('script-title').textContent = script ? script.title : 'Your script';
   $('script-text').textContent = script ? script.text : 'The script you should say will appear here.';
+  const keywords = script?.keywords || [];
+  $('script-keywords').classList.toggle('hidden', !keywords.length);
+  $('keyword-list').innerHTML = keywords.map((k) => `<li>${esc(k)}</li>`).join('');
   $('script-scroll').scrollTop = 0;
   updateButtons();
 }

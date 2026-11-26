@@ -38,6 +38,7 @@ const toRow = (s: Script): Row => ({
   text: s.text,
   language: s.language ?? null,
   active: s.active ? 1 : 0,
+  keywords: s.keywords.length ? JSON.stringify(s.keywords) : null,
   updated_at: new Date(s.updatedAt),
 });
 
@@ -47,6 +48,7 @@ const toScript = (row: Row): Script => ({
   text: row.text,
   language: row.language || undefined,
   active: !!row.active,
+  keywords: row.keywords ? JSON.parse(row.keywords) : [],
   createdAt: row.created_at.toISOString(),
   updatedAt: row.updated_at.toISOString(),
 });
