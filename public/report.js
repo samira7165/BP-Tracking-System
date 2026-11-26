@@ -6,7 +6,7 @@ const fmtTime = (sec) => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${Str
 const fmtDate = (iso) => new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 const ICONS = {
-  print: '<path d="M7 9V4h10v5M7 17H4.5v-7A1 1 0 0 1 5.5 9h13a1 1 0 0 1 1 1v7H17M7 14h10v6H7z" />',
+  download: '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" />',
   file: '<path d="M13 4H7v16h10.5V8.5zM13 4v4.5h4.5" />',
   redo: '<path d="M4.5 5v5h5M5 10a7.5 7.5 0 1 1-.4 4.5" />',
   plus: '<path d="M12 5v14M5 12h14" />',
@@ -75,10 +75,86 @@ function appearanceSection(id, a) {
   return `<section class="rp-look">${head(a.error ? '' : `<p class="rp-look-score"><b>${Number(a.score)}</b>/100</p>`)}<div class="shots">${shots}</div>${body}</section>`;
 }
 
+// ---------- downloads ----------
+let currentReport = null;
+
+/** e.g. "Tips - samira - 2026-11-26". Characters Windows does not allow in file names are left out. */
+function downloadName(rec) {
+  const day = new Date(rec.createdAt).toISOString().slice(0, 10);
+  return [rec.title || 'Recording', rec.speaker, day]
+    .filter(Boolean)
+    .join(' - ')
+    .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '')
+    .slice(0, 120);
+}
+
+function videoExtension(rec) {
+  const fromName = /\.[a-z0-9]{2,5}$/i.exec(rec.video?.originalName || '');
+  if (fromName) return fromName[0].toLowerCase();
+  return /mp4/.test(rec.video?.mimeType || '') ? '.mp4' : '.webm';
+}
+
+/** The PDF library is large, so it is only loaded the first time someone downloads. */
+function loadPdfLibrary() {
+  if (window.html2pdf) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = '/vendor/html2pdf.bundle.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Could not load the PDF tool. Check the connection and try again.'));
+    document.head.append(s);
+  });
+}
+
+/** Saves the report on screen as a PDF file, without a print window. */
+window.downloadPdf = async () => {
+  const btn = $('btn-pdf');
+  const label = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = 'Preparing PDF…';
+  // A copy at the top left of the page: drawing the report where it is (scrolled, next to the
+  // sidebar) cuts off its left side and top.
+  const holder = document.createElement('div');
+  holder.className = 'pdf-holder';
+  const copy = $('report').cloneNode(true);
+  copy.removeAttribute('id');
+  copy.classList.add('pdf-mode');
+  holder.append(copy);
+  let scrollBack = null;
+  try {
+    await loadPdfLibrary();
+    await document.fonts.ready;
+    document.body.append(holder);
+    // The PDF tool measures from the top of the window, so draw with the page scrolled to the top
+    scrollBack = window.scrollY;
+    window.scrollTo(0, 0);
+    await window
+      .html2pdf()
+      .set({
+        margin: [10, 10, 12, 10],
+        filename: downloadName(currentReport) + '.pdf',
+        image: { type: 'jpeg', quality: 0.92 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['.rp-head', '.rp-result', '.rp-stats', '.rp-aspects > div', '.shots', 'li', 'h3'] },
+      })
+      .from(copy)
+      .save();
+  } catch (err) {
+    alert(err.message || 'The PDF could not be made.');
+  } finally {
+    holder.remove();
+    if (scrollBack !== null) window.scrollTo(0, scrollBack);
+    btn.disabled = false;
+    btn.innerHTML = label;
+  }
+};
+
 /** Fills #report (admin dashboard only). window.reprocess is in admin.js. */
 function showReport(rec) {
   const el = $('report');
   el.classList.remove('hidden');
+  currentReport = rec;
 
   const head = (actions) => `
     <div class="rp-head">
@@ -107,7 +183,8 @@ function showReport(rec) {
     listSection('Advice for the brand promoter', r.suggestions.map(esc));
 
   el.innerHTML = `
-    ${head(`<button class="btn" onclick="window.print()">${icon('print')}Print or save PDF</button>
+    ${head(`<button class="btn" id="btn-pdf" onclick="downloadPdf()">${icon('download')}Download PDF</button>
+      <a class="btn" href="${esc(rec.videoUrl)}" download="${esc(downloadName(rec))}${esc(videoExtension(rec))}">${icon('download')}Download video</a>
       <a class="btn" href="${API}/${rec.id}/report" target="_blank">${icon('file')}JSON</a>${rerun}`)}
 
     <div class="rp-result ${r.verdict}">
